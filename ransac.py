@@ -2,6 +2,7 @@ from scipy import *
 from scipy.linalg import *
 from scipy.special import *
 from random import choice
+import sys
 
 from sift import *
 from homography import *
@@ -97,7 +98,7 @@ def ransac(im1, im2, points_list, iters = 10 , error = 10, good_model_num = 5):
                 out = B - dot(H, A)
                 dist_err = hypot(out[0][0], out[1][0])
                 dists.append(dist_err)
-            if max(dists) < error:
+            if (max(dists) < error) and (max(dists) < model_error):
                 model_error = max(dists)
                 model_H = H
                         
@@ -109,8 +110,13 @@ if __name__ == "__main__":
         os.mkdir("temp")
     except OSError:
         pass
-    im1 = Image.open('1.jpg').convert('L')
-    im2 = Image.open('2.jpg').convert('L')
+
+    try:
+        im1 = Image.open(sys.argv[1]).convert('L')
+        im2 = Image.open(sys.argv[2]).convert('L')
+    except IndexError:
+        print 'Usage: python ransac.py image1 image2'
+        sys.exit()
     im1.save('temp/1.pgm')
     im2.save('temp/2.pgm')
     im1 = asarray(im1)
@@ -123,4 +129,8 @@ if __name__ == "__main__":
     plist = get_points(key1[0], key2[0], score)
     plot_matches(im1,im2,key1[0],key2[0],score)
     out = ransac(im1, im2, plist)
-    print out
+    print 'Homography matrix: ', out
+    H = inv(out)
+    imtemp = affine_transform(im1, H[:2, :2], [H[0][2], H[1][2]])
+    Image.fromarray(im2).show()
+    Image.fromarray(imtemp).show()

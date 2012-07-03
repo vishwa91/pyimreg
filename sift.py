@@ -3,11 +3,13 @@ Python module for use with David Lowe's SIFT code available at:
 http://www.cs.ubc.ca/~lowe/keypoints/
 adapted from the matlab code examples.
 
-Jan Erik Solem, 2009-01-30
+Initial code by Jan Erik Solem, 2009-01-30
 """
 
 import os
+from scipy import *
 from numpy import *
+from scipy.ndimage import *
 import pylab
 
 
@@ -119,25 +121,8 @@ def plot_matches(im1,im2,locs1,locs2,matchscores):
     cols1 = im1.shape[1]
     for i in range(len(matchscores)):
         if matchscores[i] > 0:
-            pylab.plot([locs1[i,1], locs2[int(matchscores[i]),1]+cols1], [locs1[i,0], locs2[int(matchscores[i]),0]], 'c')
+            pylab.plot([locs1[i,1], locs2[int(matchscores[i]),1]+cols1],
+                       [locs1[i,0], locs2[int(matchscores[i]),0]], 'c')
     pylab.axis('off')
     pylab.show()
 
-if __name__ == "__main__":
-    import Image
-    try:
-        os.mkdir("temp")
-    except WindowsError:
-        pass
-    im1 = Image.open('1.jpg').convert('L')
-    im2 = Image.open('2.jpg').convert('L')
-    im1.save('temp/1.pgm')
-    im2.save('temp/2.pgm')
-    im1 = asarray(im1)
-    im2 = asarray(im2)
-    process_image('temp/1.pgm', 'temp/1.key')
-    process_image('temp/2.pgm', 'temp/2.key')
-    key1 = read_features_from_file('temp/1.key')
-    key2 = read_features_from_file('temp/2.key')
-    score = match(key1[1], key2[1])
-    plot_matches(im1, im2, key1[0], key2[0], score)

@@ -1,1 +1,8 @@
-Initial commit
+Author: Vishwanath
+
+
+Dependent packages: scipy PIL
+Usage: python ransac.py image1 image2
+Output: The program outputs the homography matrix to the console and also shows
+        The first image transformed to match the second image
+

@@ -6,7 +6,7 @@ import sys
 
 from sift import *
 from homography import *
-
+# New version coming soon.
 def get_points(locs1, locs2, matchscores):
     '''
         Return the corresponding points in both the images

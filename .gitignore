@@ -5,4 +5,7 @@ siftWin32.exe
 *.pyc
 *.jpg
 *.bmp
+*.png
+*.swp
+*.swo
 temp/

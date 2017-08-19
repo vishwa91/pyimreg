@@ -1,5 +1,6 @@
 from scipy import *
 from scipy import linalg
+from scipy import ndimage
 
 def Haffine_from_points(fp,tp):
     """ find H, affine transformation, such that 
@@ -40,3 +41,17 @@ def Haffine_from_points(fp,tp):
     H = dot(linalg.inv(C2),dot(H,C1))
 
     return H / H[2][2]
+
+def affine_transform2(im, rot, shift):
+    '''
+        Perform affine transform for 2/3D images.
+    '''
+    if ndim(im) == 2:
+        return affine_transform(im, rot, shift)
+    else:
+        imr = ndimage.affine_transform(im[:, :, 0], rot, shift)
+        img = ndimage.affine_transform(im[:, :, 1], rot, shift)
+        imb = ndimage.affine_transform(im[:, :, 2], rot, shift)
+
+        return dstack((imr, img, imb))
+

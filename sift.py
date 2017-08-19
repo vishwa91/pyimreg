@@ -94,7 +94,18 @@ def plot_features(im,locs):
     pylab.axis('off')
     pylab.show()
     
-def appendimages(im1,im2):
+def appendimages(im1, im2):
+    """ Return a new concatenated images side-by-side """
+    if ndim(im1) == 2:
+        return _appendimages(im1, im2)
+    else:
+        imr = _appendimages(im1[:, :, 0], im2[:, :, 0])
+        img = _appendimages(im1[:, :, 1], im2[:, :, 1])
+        imb = _appendimages(im1[:, :, 2], im2[:, :, 2])
+        return dstack((imr, img, imb))
+
+
+def _appendimages(im1,im2):
     """ return a new image that appends the two images side-by-side."""
     
     #select the image with the fewest rows and fill in enough empty rows

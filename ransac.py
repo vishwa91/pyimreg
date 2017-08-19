@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from scipy import *
 from scipy.linalg import *
 from scipy.special import *
@@ -6,6 +8,7 @@ import sys
 
 from sift import *
 from homography import *
+
 # New version coming soon.
 def get_points(locs1, locs2, matchscores):
     '''
@@ -29,8 +32,11 @@ def ransac(im1, im2, points_list, iters = 10 , error = 10, good_model_num = 5):
         This function uses RANSAC algorithm to estimate the
         shift and rotation between the two given images
     '''
-    
-    rows,cols = im1.shape
+
+    if ndim(im1) == 2:
+        rows,cols = im1.shape
+    else:
+        rows, cols, _ = im1.shape
 
     model_error = 255
     model_H = None
@@ -43,31 +49,31 @@ def ransac(im1, im2, points_list, iters = 10 , error = 10, good_model_num = 5):
             temp = choice(points_list_temp)
             consensus_set.append(temp)
             points_list_temp.remove(temp)
-        
+
         # Calculate the homography matrix from the 3 points
-        
+
         fp0 = []
         fp1 = []
         fp2 = []
-        
+
         tp0 = []
         tp1 = []
         tp2 = []
         for line in consensus_set:
-        
+
             fp0.append(line[0][0])
             fp1.append(line[0][1])
             fp2.append(1)
-            
+
             tp0.append(line[1][0])
             tp1.append(line[1][1])
             tp2.append(1)
-            
+
         fp = array([fp0, fp1, fp2])
         tp = array([tp0, tp1, tp2])
-        
+
         H = Haffine_from_points(fp, tp)
-                            
+
         # Transform the second image
         # imtemp = transform_im(im2, [-xshift, -yshift], -theta)
         # Check if the other points fit this model
@@ -78,12 +84,12 @@ def ransac(im1, im2, points_list, iters = 10 , error = 10, good_model_num = 5):
 
             A = array([x1, y1, 1]).reshape(3,1)
             B = array([x2, y2, 1]).reshape(3,1)
-            
+
             out = B - dot(H, A)
             dist_err = hypot(out[0][0], out[1][0])
             if dist_err < error:
-                consensus_set.append(p)            
-            
+                consensus_set.append(p)
+
 
         # Check how well is our speculated model
         if len(consensus_set) >= good_model_num:
@@ -91,19 +97,19 @@ def ransac(im1, im2, points_list, iters = 10 , error = 10, good_model_num = 5):
             for p in consensus_set:
                 x0, y0 = p[0]
                 x1, y1 = p[1]
-                
+
                 A = array([x0, y0, 1]).reshape(3,1)
                 B = array([x1, y1, 1]).reshape(3,1)
-                
+
                 out = B - dot(H, A)
                 dist_err = hypot(out[0][0], out[1][0])
                 dists.append(dist_err)
             if (max(dists) < error) and (max(dists) < model_error):
                 model_error = max(dists)
                 model_H = H
-                        
+
     return model_H
-    
+
 if __name__ == "__main__":
     import Image
     try:
@@ -112,13 +118,14 @@ if __name__ == "__main__":
         pass
 
     try:
-        im1 = Image.open(sys.argv[1]).convert('L')
-        im2 = Image.open(sys.argv[2]).convert('L')
+        # Load images from command prompt
+        im1 = Image.open(sys.argv[1])
+        im2 = Image.open(sys.argv[2])
     except IndexError:
         print 'Usage: python ransac.py image1 image2'
         sys.exit()
-    im1.save('temp/1.pgm')
-    im2.save('temp/2.pgm')
+    im1.convert('L').save('temp/1.pgm')
+    im2.convert('L').save('temp/2.pgm')
     im1 = asarray(im1)
     im2 = asarray(im2)
     process_image('temp/1.pgm', 'temp/1.key')
@@ -131,6 +138,6 @@ if __name__ == "__main__":
     out = ransac(im1, im2, plist)
     print 'Homography matrix: ', out
     H = inv(out)
-    imtemp = affine_transform(im1, H[:2, :2], [H[0][2], H[1][2]])
+    imtemp = affine_transform2(im1, H[:2, :2], [H[0][2], H[1][2]])
     Image.fromarray(im2).show()
     Image.fromarray(imtemp).show()

@@ -111,7 +111,7 @@ def ransac(im1, im2, points_list, iters = 10 , error = 10, good_model_num = 5):
     return model_H
 
 if __name__ == "__main__":
-    import Image
+    from PIL import Image
     try:
         os.mkdir("temp")
     except OSError:
@@ -141,3 +141,4 @@ if __name__ == "__main__":
     imtemp = affine_transform2(im1, H[:2, :2], [H[0][2], H[1][2]])
     Image.fromarray(im2).show()
     Image.fromarray(imtemp).show()
+    Image.fromarray(imtemp).save('result.jpg') # save result

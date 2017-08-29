@@ -3,17 +3,17 @@ from scipy import linalg
 from scipy import ndimage
 
 def Haffine_from_points(fp,tp):
-    """ find H, affine transformation, such that 
+    """ find H, affine transformation, such that
         tp is affine transf of fp"""
 
     if fp.shape != tp.shape:
-        raise RuntimeError, 'number of points do not match'
+        raise RuntimeError
 
     #condition points
     #-from points-
     m = mean(fp[:2], axis=1)
     maxstd = max(std(fp[:2], axis=1))
-    C1 = diag([1/maxstd, 1/maxstd, 1]) 
+    C1 = diag([1/maxstd, 1/maxstd, 1])
     C1[0][2] = -m[0]/maxstd
     C1[1][2] = -m[1]/maxstd
     fp_cond = dot(C1,fp)
@@ -34,7 +34,7 @@ def Haffine_from_points(fp,tp):
     B = tmp[:2]
     C = tmp[2:4]
 
-    tmp2 = concatenate((dot(C,linalg.pinv(B)),zeros((2,1))), axis=1) 
+    tmp2 = concatenate((dot(C,linalg.pinv(B)),zeros((2,1))), axis=1)
     H = vstack((tmp2,[0,0,1]))
 
     #decondition
@@ -47,11 +47,10 @@ def affine_transform2(im, rot, shift):
         Perform affine transform for 2/3D images.
     '''
     if ndim(im) == 2:
-        return affine_transform(im, rot, shift)
+        return ndimage.affine_transform(im, rot, shift)
     else:
         imr = ndimage.affine_transform(im[:, :, 0], rot, shift)
         img = ndimage.affine_transform(im[:, :, 1], rot, shift)
         imb = ndimage.affine_transform(im[:, :, 2], rot, shift)
 
         return dstack((imr, img, imb))
-

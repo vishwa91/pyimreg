@@ -4,10 +4,13 @@ from scipy import *
 from scipy.linalg import *
 from scipy.special import *
 from random import choice
+from PIL import Image
 import sys
 
 from sift import *
 from homography import *
+
+import pdb
 
 # New version coming soon.
 def get_points(locs1, locs2, matchscores):
@@ -26,6 +29,33 @@ def get_points(locs1, locs2, matchscores):
 
             plist.append([[x1,y1],[x2,y2]])
     return plist
+
+def get_homography(points_list):
+    '''
+        Function to quickly compute a homography matrix from all point 
+        correspondences.
+
+        Inputs:
+            points_list: tuple of tuple of tuple of correspondence indices. Each
+            entry is [[x1, y1], [x2, y2]] where [x1, y1] from image 1 corresponds
+            to [x2, y2] from image 2.
+
+        Outputs:
+            H: Homography matrix.
+    '''
+    fp = ones((len(plist), 3))
+    tp = ones((len(plist), 3))
+
+    for idx in range(len(plist)):
+        fp[idx, 0] = plist[idx][0][0]
+        fp[idx, 1] = plist[idx][0][1]
+
+        tp[idx, 0] = plist[idx][1][0]
+        tp[idx, 1] = plist[idx][1][1]
+
+    H = Haffine_from_points(fp.T, tp.T)
+
+    return H
 
 def ransac(im1, im2, points_list, iters = 10 , error = 10, good_model_num = 5):
     '''
@@ -111,7 +141,6 @@ def ransac(im1, im2, points_list, iters = 10 , error = 10, good_model_num = 5):
     return model_H
 
 if __name__ == "__main__":
-    import Image
     try:
         os.mkdir("temp")
     except OSError:
@@ -122,7 +151,7 @@ if __name__ == "__main__":
         im1 = Image.open(sys.argv[1])
         im2 = Image.open(sys.argv[2])
     except IndexError:
-        print 'Usage: python ransac.py image1 image2'
+        print('Usage: python ransac.py image1 image2')
         sys.exit()
     im1.convert('L').save('temp/1.pgm')
     im2.convert('L').save('temp/2.pgm')
@@ -135,9 +164,22 @@ if __name__ == "__main__":
     score = match(key1[1], key2[1])
     plist = get_points(key1[0], key2[0], score)
     plot_matches(im1,im2,key1[0],key2[0],score)
-    out = ransac(im1, im2, plist)
-    print 'Homography matrix: ', out
-    H = inv(out)
-    imtemp = affine_transform2(im1, H[:2, :2], [H[0][2], H[1][2]])
+    
+    # Compare ransac and simple homography matrix
+    out_ransac = ransac(im1, im2, plist)
+    out_simple = get_homography(plist)
+
+    H_ransac = inv(out_ransac)
+    H_simple = inv(out_simple)
+
+    im_ransac = affine_transform2(im1,
+                                  H_ransac[:2, :2],
+                                  [H_ransac[0][2], H_ransac[1][2]])
+
+    im_simple = affine_transform2(im1,
+                                  H_simple[:2, :2],
+                                  [H_simple[0][2], H_simple[1][2]])
+
     Image.fromarray(im2).show()
-    Image.fromarray(imtemp).show()
+    Image.fromarray(im_ransac).show()
+    Image.fromarray(im_simple).show()
